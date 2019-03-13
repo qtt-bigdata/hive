@@ -132,6 +132,9 @@ public final class HiveMaterializedViewsRegistry {
     @Override
     public void run() {
       try {
+        SessionState ss = new SessionState(db.getConf());
+        ss.setIsHiveServerQuery(true); // All is served from HS2, we do not need e.g. Tez sessions
+        SessionState.start(ss);
         List<Table> materializedViews = new ArrayList<Table>();
         for (String dbName : db.getAllDatabases()) {
           materializedViews.addAll(db.getAllMaterializedViewObjects(dbName));
