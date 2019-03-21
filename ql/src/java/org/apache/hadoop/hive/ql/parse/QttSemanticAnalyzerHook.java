@@ -1,24 +1,25 @@
 package org.apache.hadoop.hive.ql.parse;
 
+import java.io.Serializable;
+import java.util.*;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.ql.exec.Task;
-import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
-
-import java.io.Serializable;
-import java.util.*;
+import org.apache.hadoop.hive.ql.hooks.ReadEntity;
+import org.apache.hadoop.hive.shims.ShimLoader;
 
 public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
     private final static String NO_PARTITION_WARNING = "WARNING: HQL is not efficient, Please specify partition condition! HQL:%s ;USERNAME:%s";
     private final static String SHOW_PARTITIONS_WARNING = "WARNING: HQL is not efficient, Please specify show partitions condition! HQL:%s ;USERNAME:%s";
-    private final SessionState ss = SessionState.get();
+    private SessionState ss = SessionState.get();
     private final LogHelper console = SessionState.getConsole();
     private Hive hive = null;
     private String username;
@@ -36,7 +37,7 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
 
     @Override
     public ASTNode preAnalyze(HiveSemanticAnalyzerHookContext context, ASTNode ast)
-            throws SemanticException {
+            throws SemanticException{
 
 //        if(ast.getToken().getType() == HiveParser.TOK_QUERY){
 //
@@ -45,7 +46,23 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
 
 
 //        return ast;
-        hql = ss.getLastCommand().trim().toLowerCase();
+
+        if(ss == null){
+            try {
+                ss = new SessionState(context.getHive().getConf());
+            } catch (HiveException e) {
+                e.printStackTrace();
+            }
+            ss.setIsHiveServerQuery(true); // All is served from HS2, we do not need e.g. Tez sessions
+            SessionState.start(ss);
+            console.printInfo(ss.toString());
+        }
+
+        if(ss.getLastCommand() == null){
+            console.printInfo("getlastcommand is null");
+        }
+
+        hql = context.getCommand().trim().toLowerCase();
         hql = StringUtils.replaceChars(hql, '\n', ' ');
         if (hql.contains("where")) {
             whereHql = hql.substring(hql.indexOf("where"));
@@ -186,20 +203,20 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
     @Override
     public void postAnalyze(HiveSemanticAnalyzerHookContext context,
                             List<Task<? extends Serializable>> rootTasks) throws SemanticException {
-         HiveConf conf = hive.getConf();
-         String[] dayKeyList = conf.get("hive.partition.day.keys").trim().split(",");
-         Set<ReadEntity> readEntitys = context.getInputs();
-         int count = 0;
-         //过滤大表超过一天的查询操作
-         Map<String, Set<String>> bigTableToFilter = new HashMap<>();
+        HiveConf conf = hive.getConf();
+        String[] dayKeyList = conf.get("hive.partition.day.keys").trim().split(",");
+        Set<ReadEntity> readEntitys = context.getInputs();
+        int count = 0;
+        //过滤大表超过一天的查询操作
+        Map<String, Set<String>> bigTableToFilter = new HashMap<>();
 
-         //正常表的超过30天的查询操作
-         Map<String, Set<String>> normalTableToFilter = new HashMap<>();
+        //正常表的超过30天的查询操作
+        Map<String, Set<String>> normalTableToFilter = new HashMap<>();
 
-         console.printInfo("Total Read Entity Size:" + readEntitys.size());
+        console.printInfo("Total Read Entity Size:" + readEntitys.size());
 
 
-         for (ReadEntity readEntity : readEntitys) {
+        for (ReadEntity readEntity : readEntitys) {
             Partition p = readEntity.getPartition();
             if(p != null){
                 Table t = readEntity.getTable();
@@ -243,7 +260,7 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
                 }
             }
 
-         }
+        }
     }
 
     //解析每一个partition是否是一天的量
@@ -253,8 +270,8 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
             for(String key : keyList){
                 if(key.contains(dayKey)){
                     //规范化key为data=20190311这种
-                     String formatKey = key.substring(key.indexOf(dayKey));
-                     return formatKey.split("=")[1];
+                    String formatKey = key.substring(key.indexOf(dayKey));
+                    return formatKey.split("=")[1];
                 }
             }
 
