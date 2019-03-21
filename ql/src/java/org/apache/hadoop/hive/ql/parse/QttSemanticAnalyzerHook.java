@@ -205,6 +205,7 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
                             List<Task<? extends Serializable>> rootTasks) throws SemanticException {
         HiveConf conf = hive.getConf();
         String[] dayKeyList = conf.get("hive.partition.day.keys").trim().split(",");
+        allowDayCount = Integer.parseInt(conf.get("hive.normal.table.day.limit").trim());
         Set<ReadEntity> readEntitys = context.getInputs();
         int count = 0;
         //过滤大表超过一天的查询操作
@@ -220,8 +221,8 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
             Partition p = readEntity.getPartition();
             if(p != null){
                 Table t = readEntity.getTable();
-                console.printInfo("Partition information: " + p + "\n");
-                console.printInfo("Table information: "+t+"\n");
+                //console.printInfo("Partition information: " + p + "\n");
+                //console.printInfo("Table information: "+t+"\n");
                 String partitionLine = p.toString();
                 String tableName = t.toString().trim();
 
@@ -250,8 +251,8 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
                                 normalTableToFilter.put(tableName, new HashSet<String>());
                             }
                             normalTableToFilter.get(tableName).add(dayValue);
-                            if(normalTableToFilter.get(tableName).size() > 30){
-                                throw new SemanticException("普通表查询不能超过30天");
+                            if(normalTableToFilter.get(tableName).size() > allowDayCount){
+                                throw new SemanticException("普通表查询不能超过"+allowDayCount+"天");
                             }
 
                         }
