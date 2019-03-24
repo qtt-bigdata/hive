@@ -26,6 +26,7 @@ import org.apache.hadoop.hive.ql.exec.StatsTask;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskRunner;
 import org.apache.hadoop.hive.ql.exec.mr.MapRedTask;
+import org.apache.hadoop.hive.ql.log.PerfLogger;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.plan.MapWork;
 import org.apache.hadoop.hive.ql.plan.ReduceWork;
@@ -105,8 +106,14 @@ public class DriverContext {
    *
    * @return The result object for any completed/failed task
    */
-  public synchronized TaskRunner pollFinished() throws InterruptedException {
+  public synchronized TaskRunner pollFinished(PerfLogger perfLogger, long hiveRunTimeout) throws InterruptedException {
     while (!shutdown) {
+      long nowTime = System.currentTimeMillis();
+      long runTimeDuration = nowTime - perfLogger.getStartTime(PerfLogger.RUN_TASKS).longValue();
+      if (runTimeDuration > hiveRunTimeout) {
+        console.printError("Hive run timeout !");
+        shutdown();
+      }
       Iterator<TaskRunner> it = running.iterator();
       while (it.hasNext()) {
         TaskRunner runner = it.next();
