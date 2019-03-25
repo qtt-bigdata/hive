@@ -108,12 +108,15 @@ public class DriverContext {
    */
   public synchronized TaskRunner pollFinished(PerfLogger perfLogger, long hiveRunTimeout) throws InterruptedException {
     while (!shutdown) {
-      long nowTime = System.currentTimeMillis();
-      long runTimeDuration = nowTime - perfLogger.getStartTime(PerfLogger.RUN_TASKS).longValue();
-      if (runTimeDuration > hiveRunTimeout) {
-        console.printError("Hive run timeout !");
-        shutdown();
-      }
+//      long nowTime = System.currentTimeMillis();
+//      long runTimeDuration = nowTime - perfLogger.getStartTime(PerfLogger.RUN_TASKS).longValue();
+//      console.printInfo("度过的时间为： " + runTimeDuration);
+//      console.printInfo("设置的超时时间为：   + " + hiveRunTimeout);
+//      if (runTimeDuration > hiveRunTimeout) {
+//        console.printError("Hive run timeout !");
+//        shutdown();
+//
+//      }
       Iterator<TaskRunner> it = running.iterator();
       while (it.hasNext()) {
         TaskRunner runner = it.next();

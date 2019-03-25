@@ -59,7 +59,7 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
         }
 
         if(ss.getLastCommand() == null){
-            console.printInfo("getlastcommand is null");
+            //console.printInfo("getlastcommand is null");
         }
 
         hql = context.getCommand().trim().toLowerCase();
@@ -78,7 +78,7 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
         //过滤非法的set操作
         HiveConf conf = hive.getConf();
         //打印点东西看一下
-        console.printInfo(conf.get("hive.qtt.bigtable.filter"));
+        //console.printInfo(conf.get("hive.qtt.bigtable.filter"));
         bigTableFilter = conf.get("hive.qtt.bigtable.filter");
         console.printInfo(hql);
         username = ss.getUserName();
@@ -146,10 +146,10 @@ public class QttSemanticAnalyzerHook extends AbstractSemanticAnalyzerHook {
             case HiveParser.TOK_CREATEDATABASE:
             case HiveParser.TOK_CREATETABLE:
             case HiveParser.TOK_ALTERTABLE:
-                if(hql.contains("location")){
-                    if(!hql.contains("/user/hive/warehouse/"))
-                        throw new SemanticException("the data path must be under /user/hive/warehouse/");
-                }
+//                if(hql.contains("location")){
+//                    if(!hql.contains("/user/hive/warehouse/"))
+//                        throw new SemanticException("the data path must be under /user/hive/warehouse/");
+//                }
                 break;
             default:
                 break;
