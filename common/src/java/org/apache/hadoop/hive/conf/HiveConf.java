@@ -3647,6 +3647,28 @@ public class HiveConf extends Configuration {
       throw new IllegalArgumentException("Cannot modify " + name + " at runtime. It is in the list"
           + " of parameters that can't be modified at runtime");
     }
+
+    if(name.contains("mapreduce.map.memory.mb")){
+      if(Integer.parseInt(value) > Integer.parseInt(get(name + ".max"))){
+        throw new IllegalArgumentException("Cannot modify " + name + " at runtime. "
+                + "mapreduce.map.memory.mb.max is :"+get(name + ".max"));
+      }
+    }else if(name.contains("mapreduce.reduce.memory.mb")){
+      if(Integer.parseInt(value) > Integer.parseInt(get(name + ".max"))){
+        throw new IllegalArgumentException("Cannot modify " + name + " at runtime. "
+                + "mapreduce.reduce.memory.mb.max is :"+get(name + ".max"));
+      }
+    }else if(name.contains("mapreduce.map.cpu.vcores")){
+      if(Integer.parseInt(value) > Integer.parseInt(get(name + ".max"))){
+        throw new IllegalArgumentException("Cannot modify " + name + " at runtime. "
+                + "mapreduce.map.cpu.vcores.max is :"+get(name + ".max"));
+      }
+    }else if(name.contains("mapreduce.reduce.cpu.vcores")){
+      if(Integer.parseInt(value) > Integer.parseInt(get(name + ".max"))){
+        throw new IllegalArgumentException("Cannot modify " + name + " at runtime. "
+                + "mapreduce.reduce.cpu.vcores.max is:"+get(name +".max"));
+      }
+    }
     String oldValue = name != null ? get(name) : null;
     if (name == null || value == null || !value.equals(oldValue)) {
       // When either name or value is null, the set method below will fail,

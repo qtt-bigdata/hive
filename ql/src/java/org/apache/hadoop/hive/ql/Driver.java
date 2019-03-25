@@ -1694,6 +1694,7 @@ public class Driver implements CommandProcessor {
   }
 
   public int execute(boolean deferClose) throws CommandNeedRetryException {
+    long hiveRunTimeout = 1000 * 1000 * Integer.parseInt(conf.get("hive.run.timeout.seconds"));
     PerfLogger perfLogger = SessionState.getPerfLogger();
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.DRIVER_EXECUTE);
 
@@ -1843,7 +1844,7 @@ public class Driver implements CommandProcessor {
         }
 
         // poll the Tasks to see which one completed
-        TaskRunner tskRun = driverCxt.pollFinished();
+        TaskRunner tskRun = driverCxt.pollFinished(perfLogger, hiveRunTimeout);
         if (tskRun == null) {
           continue;
         }
